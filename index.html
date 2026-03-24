@@ -69,8 +69,32 @@ async function fetchNews() {
     container.innerHTML = '<div class="col-span-full text-center text-red-500">Satellite link failed. Please refresh.</div>';
   }
 }
-fetchNews();
-</script>
-</body>
-</html>
+async function fetchNews(filter = 'all') {
+  currentFilter = filter;
+  // This new link is "Street-Smart"—it doesn't get blocked by GitHub
+  const url = 'https://ok.surf/api/v1/cors/news-feed'; 
 
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    // This part matches the news to your "Geopolitics" and "Tech" buttons
+    const categoryMap = {
+      all: data.World.concat(data.Business, data.Technology),
+      geopolitics: data.World,
+      world: data.World,
+      markets: data.Business,
+      technology: data.Technology
+    };
+
+    allArticles = categoryMap[filter] || categoryMap.all;
+    renderNews(allArticles, filter); // This keeps your original design
+    buildHero(allArticles);
+    buildTrending(allArticles);
+  } catch(e) {
+    console.error("Signal lost:", e);
+    // This is where your Satellite error shows up if the link fails
+    document.getElementById('newsGrid').innerHTML = `<div class="error-state">📡 Connection Error</div>`;
+  }
+}
+  
