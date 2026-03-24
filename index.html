@@ -524,7 +524,7 @@ Leave a blank line between paragraphs — each one formats automatically."></tex
 <div class="toast" id="toast"></div>
 
 <script>
-const API_KEY = 'a93fe57eaac449f3968b39d2c46b6267';
+const API_KEY = 'https://ok.surf/api/v1/cors/news-feed';
 const QUERIES = {
   all: 'world politics OR geopolitics OR international relations OR war OR diplomacy',
   geopolitics: 'geopolitics OR military conflict OR nato OR war OR sanctions OR nuclear',
@@ -623,8 +623,31 @@ function buildMarkets() {
 // ---- FETCH NEWS ----
 async function fetchNews(filter = 'all') {
   currentFilter = filter;
-  const query = QUERIES[filter] || QUERIES.all;
-  const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&pageSize=20&apiKey=${API_KEY}`;
+  const url = 'https://ok.surf/api/v1/cors/news-feed'; // Your new source
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    // Mapping the ok.surf categories to your layout
+    const categoryMap = {
+      all: data.World.concat(data.Business, data.Technology),
+      geopolitics: data.World,
+      world: data.World,
+      markets: data.Business,
+      technology: data.Technology
+    };
+
+    allArticles = categoryMap[filter] || categoryMap.all;
+    renderNews(allArticles, filter);
+    buildHero(allArticles);
+    buildTrending(allArticles);
+  } catch(e) {
+    console.error("Signal lost:", e);
+    document.getElementById('newsGrid').innerHTML = `<div class="error-state">📡 Connection Error</div>`;
+  }
+}
+  
 
   // Show skeleton
   document.getElementById('newsGrid').innerHTML = `<div class="loading-grid">${[1,2,3,4].map(i=>`
